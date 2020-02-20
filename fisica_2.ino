@@ -14,6 +14,7 @@
 ------------------------------------------------------------------------------*/
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 ESP8266WebServer server;
 //Define WiFi Name and password:
 char* ssid = "Flow";
@@ -24,22 +25,31 @@ IPAddress local_ip(192,168,10,4);
 IPAddress gateway(192,168,10,1);
 IPAddress subnet(255,255,255,0);
 
+//Define DNS Server:
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
+
+//Define HTTP Server:
+ESP8266WebServer webServer(80);
+
+String responseHTML = ""
+                      "<!DOCTYPE html><html><head><title>CaptivePortal</title></head><body>"
+                      "<h1>Hello World!</h1><p>This is a captive portal example. All requests will "
+                      "be redirected here.</p></body></html>";
+
 void setup() {
 
-//Start WiFi in AP mode:
-WiFi.softAP(ssid, password);
-
-WiFi.softAPConfig (local_ip, gateway, subnet);
 
 //Open Serial Port:
 Serial.begin(115200);
 
 Serial.println();
-//Print Log:
+//Set Settings:
 Serial.print("Setting soft-AP configuration ... ");
 
 Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
 
+//Start WiFi in AP mode:
 Serial.print("Setting soft-AP ... ");
 
 Serial.println(WiFi.softAP(ssid, password) ? "Ready" : "Failed!");
@@ -48,9 +58,19 @@ Serial.print("Soft-AP IP address = ");
 
 Serial.println(WiFi.softAPIP());
 
+//Captive portal control:
+dnsServer.start(DNS_PORT, "*", local_ip);
+
+//Reply all request with same page:
+webServer.onNotFound([]() {
+  webServer.send(200, "text/html", responseHTML);
+  });
+  webServer.begin();
+
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+dnsServer.processNextRequest();
+webServer.handleClient();
 }
