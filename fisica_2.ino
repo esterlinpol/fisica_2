@@ -15,29 +15,34 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 ESP8266WebServer server;
-
+//Define WiFi Name and password:
 char* ssid = "Flow";
 char* password = "12345678";
 
+//Set IP address GW and subnet:
 IPAddress local_ip(192,168,10,4);
 IPAddress gateway(192,168,10,1);
 IPAddress subnet(255,255,255,0);
 
 void setup() {
-WiFi.softAP(ssid, password)
-softAPConfig (local_ip, gateway, subnet)
 
+//Start WiFi in AP mode:
+WiFi.softAP(ssid, password);
+
+WiFi.softAPConfig (local_ip, gateway, subnet);
+
+//Open Serial Port:
 Serial.begin(115200);
 
 Serial.println();
-
+//Print Log:
 Serial.print("Setting soft-AP configuration ... ");
 
-Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
+Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
 
 Serial.print("Setting soft-AP ... ");
 
-Serial.println(WiFi.softAP("ESPsoftAP_01") ? "Ready" : "Failed!");
+Serial.println(WiFi.softAP(ssid, password) ? "Ready" : "Failed!");
 
 Serial.print("Soft-AP IP address = ");
 
