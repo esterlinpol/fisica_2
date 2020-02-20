@@ -16,6 +16,21 @@
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 ESP8266WebServer server;
+//Set Website content:
+const char responseHTML[] PROGMEM={"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n"
+"<title>Distribucion de Fluidos</title>\n"
+"</head>\n"
+"<body>\n"
+"<div id=\"webpage\">\n"
+"<h1>Sistema de Monitoreo</h1>\n"
+"</div>\n"
+"</body>\n"
+"</html>\n"
+};
+
 //Define WiFi Name and password:
 char* ssid = "Flow";
 char* password = "12345678";
@@ -32,10 +47,6 @@ DNSServer dnsServer;
 //Define HTTP Server:
 ESP8266WebServer webServer(80);
 
-String responseHTML = ""
-                      "<!DOCTYPE html><html><head><title>CaptivePortal</title></head><body>"
-                      "<h1>Hello World!</h1><p>This is a captive portal example. All requests will "
-                      "be redirected here.</p></body></html>";
 
 void setup() {
 
@@ -72,5 +83,5 @@ webServer.onNotFound([]() {
 
 void loop() {
 dnsServer.processNextRequest();
-webServer.handleClient();
+ webServer.handleClient();
 }
