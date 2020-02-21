@@ -17,6 +17,9 @@
 #include <DNSServer.h>
 #include <HCSR04.h>
 ESP8266WebServer server;
+double data; 
+String page = "";
+
 /*------------------------------------------------------------------------------
   Set Website content:
 ------------------------------------------------------------------------------*/
@@ -71,7 +74,7 @@ int duration1,distance1,percentage1;
 ------------------------------------------------------------------------------*/
 
 void setup() {
-
+  pinMode(A0, INPUT);
   pinMode(trigPin1,OUTPUT); //Sets the trigPin1 as an Output
   pinMode(echoPin1,INPUT); //Sets the echoPin1 as an Input
 
@@ -106,7 +109,9 @@ void setup() {
 
   //Reply all request with same page:
   webServer.onNotFound([]() {
-    webServer.send(200, "text/html", responseHTML);
+    /* this is a sensor data send test*/
+    page = "<h1>Sensor to Node MCU Web Server</h1><h3>Data:</h3> <h4>"+String(data)+"</h4>";
+    webServer.send(200, "text/html", /*responseHTML*/page);
     });
   webServer.begin();
 
@@ -120,6 +125,7 @@ void setup() {
 void loop() {
 
   dnsServer.processNextRequest(); //DNS Server handler
+  data = analogRead(A0);
   webServer.handleClient(); //WEB Server handler
   sonar1(); //Sonar 1 value reporter
 }
@@ -127,7 +133,7 @@ void loop() {
 /*------------------------------------------------------------------------------
   Sonar 1 code, data colector:
 ------------------------------------------------------------------------------*/
-void sonar1(){
+int sonar1(){
   //Pulse and Receive:
   digitalWrite(trigPin1,HIGH);
   delayMicroseconds(1000);
