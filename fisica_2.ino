@@ -25,6 +25,7 @@ const char responseHTML[] PROGMEM={"<!DOCTYPE html>\n"
 "<head>\n"
 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n"
 "<title>Distribucion de Fluidos</title>\n"
+"<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}</style>\n"
 "</head>\n"
 "<body>\n"
 "<div id=\"webpage\">\n"
@@ -107,7 +108,7 @@ void setup() {
   webServer.onNotFound([]() {
     webServer.send(200, "text/html", responseHTML);
     });
-    webServer.begin();
+  webServer.begin();
 
 
 }
