@@ -2,7 +2,7 @@
   20/02/2020
   Author: Esterlin Polanco
   Platforms: ESP8266
-  Language: C++/Arduino
+  Language: C#/Arduino
   File: fisica_2.ino
   ------------------------------------------------------------------------------
   Description: 
@@ -16,47 +16,24 @@
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 #include <HCSR04.h>
-ESP8266WebServer server;
-double data; 
-String page = "";
 
-/*------------------------------------------------------------------------------
-  Set Website content:
-------------------------------------------------------------------------------*/
-const char responseHTML[] PROGMEM={"<!DOCTYPE html>\n"
-"<html>\n"
-"<head>\n"
-"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n"
-"<title>Distribucion de Fluidos</title>\n"
-"<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}</style>\n"
-"</head>\n"
-"<body>\n"
-"<div id=\"webpage\">\n"
-"<h1>Sistema de Monitoreo</h1>\n"
-"</div>\n"
-"</body>\n"
-"</html>\n"
-};
+#include "index.h"  //Web page header file
 
-/*------------------------------------------------------------------------------
-  Network and Web server configuration:
-------------------------------------------------------------------------------*/
+//Define WiFi Name and password for WIFI Client:
+const char* ssid = "New Line";
+const char* password = "cinema00";
 
-//Define WiFi Name and password:
-const char* ssid = "Flow";
-const char* password = "SafePass123";
-
-//Set IP address GW and subnet:
-IPAddress local_ip(192,168,10,4);
-IPAddress gateway(192,168,10,1);
-IPAddress subnet(255,255,255,0);
-
-//Define DNS Server:
-const byte DNS_PORT = 53;
-DNSServer dnsServer;
 
 //Define HTTP Server:
 ESP8266WebServer webServer(80);
+
+/*------------------------------------------------------------------------------
+  Main Website, set content, reply:
+------------------------------------------------------------------------------*/
+
+void handleRoot() {
+ webServer.send(200, "text/html", MAIN_page); //Send web page
+}
 
 /*------------------------------------------------------------------------------
   Sonar 1 configuration:
@@ -65,16 +42,46 @@ ESP8266WebServer webServer(80);
 //Define Pins for sonas module 1:
 #define trigPin1 5
 #define echoPin1 4
-int heightTank1=10; //Set Height of the container
-int deviation1=2; //Set Distance from the maximun height of the liquid
-int duration1,distance1,percentage1; 
+
+/*------------------------------------------------------------------------------
+  Sonar 1 code, data colector:
+------------------------------------------------------------------------------*/
+void sonar1(){
+  //Set variables:
+  int heightTank1=10; //Set Height of the container
+  int deviation1=2; //Set Distance from the maximun height of the liquid
+  
+  //Initializa calculation variables:
+  int duration1,distance1,percentage1;
+  
+  //Pulse and Receive:
+  digitalWrite(trigPin1,HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(trigPin1,LOW);
+  duration1=pulseIn(echoPin1,HIGH);
+  
+  //Calculate distance and percentage:
+  distance1=(duration1/2)/29.1;
+  percentage1=100-(((distance1-deviation1)*100)/heightTank1);
+  
+  //Convert result to String:
+  String amount1 = String(percentage1);
+  
+  //Send sonar 1 value only to client ajax request
+  webServer.send(200, "text/plane", amount1); 
+  
+  //Wait 1 second to re calculate:
+  delay(1000);
+
+}  
+
 
 /*------------------------------------------------------------------------------
   Startup code:
 ------------------------------------------------------------------------------*/
 
 void setup() {
-  pinMode(A0, INPUT);
+  
   pinMode(trigPin1,OUTPUT); //Sets the trigPin1 as an Output
   pinMode(echoPin1,INPUT); //Sets the echoPin1 as an Input
 
@@ -82,69 +89,53 @@ void setup() {
   Serial.begin(115200);
 
 /*------------------------------------------------------------------------------
-  WIFI AP Configuration:
-------------------------------------------------------------------------------*/
+  WIFI Client Configuration:
+  ------------------------------------------------------------------------------*/
 
-  Serial.println();
-  //Set Settings:
-  Serial.print("Setting soft-AP configuration ... ");
+  //Connect to WIFI
+  WiFi.mode(WIFI_STA); 
+  WiFi.begin(ssid, password);
 
-  Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
+  Serial.println("Connecting to ");
+  Serial.print(ssid);
 
-  //Start WiFi in AP mode:
-  Serial.print("Setting soft-AP ... ");
+  //Wait for WiFi to connect
+  while(WiFi.waitForConnectResult() != WL_CONNECTED){      
+      Serial.print(".");
+    }
+    
+  //If connection successful show IP address in serial monitor
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
 
-  Serial.println(WiFi.softAP(ssid, password) ? "Ready" : "Failed!");
-
-  Serial.print("Soft-AP IP address = ");
-
-  Serial.println(WiFi.softAPIP());
+  //Show WIFI Client IP:
+  Serial.println(WiFi.localIP());  
 
 /*------------------------------------------------------------------------------
-  Captive portal and Web server start:
-------------------------------------------------------------------------------*/
+  Start Web Server:
+  ------------------------------------------------------------------------------*/
+  
+  //Display page:
+  webServer.on("/", handleRoot);
 
-  //Captive portal control:
-  dnsServer.start(DNS_PORT, "*", local_ip);
-
-  //Reply all request with same page:
-  webServer.onNotFound([]() {
-    /* this is a sensor data send test*/
-    page = "<h1>Sensor to Node MCU Web Server</h1><h3>Data:</h3> <h4>"+String(data)+"</h4>";
-    webServer.send(200, "text/html", /*responseHTML*/page);
-    });
-  webServer.begin();
-
+  //To get update of Sonar1:      
+  webServer.on("/sonar1", sonar1);
+  
+  //Start server:
+  webServer.begin();                  
+  Serial.println("HTTP server started");
 
 }
-
 /*------------------------------------------------------------------------------
   Loop code:
 ------------------------------------------------------------------------------*/
 
 void loop() {
-
-  dnsServer.processNextRequest(); //DNS Server handler
-  data = analogRead(A0);
-  webServer.handleClient(); //WEB Server handler
-  sonar1(); //Sonar 1 value reporter
+  
+  //WEB Server handler:
+  webServer.handleClient(); 
+  delay(1);
 }
 
-/*------------------------------------------------------------------------------
-  Sonar 1 code, data colector:
-------------------------------------------------------------------------------*/
-int sonar1(){
-  //Pulse and Receive:
-  digitalWrite(trigPin1,HIGH);
-  delayMicroseconds(1000);
-  digitalWrite(trigPin1,LOW);
-  duration1=pulseIn(echoPin1,HIGH);
-  //Calculate distance and percentage:
-  distance1=(duration1/2)/29.1;
-  percentage1=100-(((distance1-deviation1)*100)/heightTank1);
-  //Print results:
-  Serial.println(distance1);
-  Serial.println(percentage1);
-  delay(1000);
-
-}  
