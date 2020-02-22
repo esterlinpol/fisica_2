@@ -32,7 +32,7 @@ IPAddress local_ip(192,168,10,4);
 IPAddress gateway(192,168,10,1);
 IPAddress subnet(255,255,255,0);
 
-//Define DNS Server:
+//Define DNS Server for captive portal:
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 
@@ -43,22 +43,26 @@ ESP8266WebServer webServer(80);
   Main Website, set content, reply:
 ------------------------------------------------------------------------------*/
 
-void handleRoot() {
- webServer.send(200, "text/html", MAIN_page); //Send web page
-}
+  void handleRoot() {
+    webServer.send(200, "text/html", MAIN_page); //Send web page
+  }
+  
+  void handleNotFound(){
+    webServer.send(200, "text/html", MAIN_page);
+  }
 
 /*------------------------------------------------------------------------------
   Sonar 1 configuration:
 ------------------------------------------------------------------------------*/
 
-//Define Pins for sonas module 1:
-#define trigPin1 5
-#define echoPin1 4
+  //Define Pins for sonas module 1:
+  #define trigPin1 5
+  #define echoPin1 4
 
 /*------------------------------------------------------------------------------
   Sonar 1 code, data colector:
 ------------------------------------------------------------------------------*/
-void sonar1(){
+  void sonar1(){
   //Set variables:
   int heightTank1=10; //Set Height of the container
   int deviation1=2; //Set Distance from the maximun height of the liquid
@@ -85,8 +89,54 @@ void sonar1(){
   //Wait 1 second to re calculate:
   delay(1000);
 
-}  
+  }  
 
+/*------------------------------------------------------------------------------
+  WIFI AP Configuration:
+------------------------------------------------------------------------------*/
+  void startAP(){
+    Serial.println();
+    //Set Settings:
+    Serial.print("Setting soft-AP configuration ... ");
+
+    Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
+
+    //Start WiFi in AP mode:
+    Serial.print("Setting soft-AP ... ");
+
+    Serial.println(WiFi.softAP(ssid1, password1) ? "Ready" : "Failed!");
+
+    Serial.print("Soft-AP IP address = ");
+
+    Serial.println(WiFi.softAPIP());
+  }
+
+/*------------------------------------------------------------------------------
+  WIFI Client Configuration:
+------------------------------------------------------------------------------*/
+  
+  void wificl(){
+
+    //Connect to WIFI
+    WiFi.begin(ssid, password);
+
+    Serial.println("Connecting to ");
+    Serial.print(ssid);
+
+    //Wait for WiFi to connect
+    while(WiFi.waitForConnectResult() != WL_CONNECTED){      
+        Serial.print(".");
+      }
+      
+    //If connection successful show IP address in serial monitor
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+
+    //Show WIFI Client IP:
+    Serial.println(WiFi.localIP());  
+  }
 
 /*------------------------------------------------------------------------------
   Startup code:
@@ -99,68 +149,25 @@ void setup() {
 
   //Open Serial Port:
   Serial.begin(115200);
-
-/*------------------------------------------------------------------------------
-  WIFI AP Configuration:
-  ------------------------------------------------------------------------------*/
-
-  Serial.println();
-  //Set Settings:
-  Serial.print("Setting soft-AP configuration ... ");
-
-  Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
-
-  //Start WiFi in AP mode:
-  Serial.print("Setting soft-AP ... ");
-
-  Serial.println(WiFi.softAP(ssid1, password1) ? "Ready" : "Failed!");
-
-  Serial.print("Soft-AP IP address = ");
-
-  Serial.println(WiFi.softAPIP());
+  startAP();
   
-
-/*------------------------------------------------------------------------------
-  WIFI Client Configuration:
-  ------------------------------------------------------------------------------
-  //Connect to WIFI
-  WiFi.mode(WIFI_STA); 
-  WiFi.begin(ssid, password);
-
-  Serial.println("Connecting to ");
-  Serial.print(ssid);
-
-  //Wait for WiFi to connect
-  while(WiFi.waitForConnectResult() != WL_CONNECTED){      
-      Serial.print(".");
-    }
-    
-  //If connection successful show IP address in serial monitor
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-
-  //Show WIFI Client IP:
-  Serial.println(WiFi.localIP());  
-*/
+  //Connect to WIFI as client:
+  wificl();
+  dnsServer.start(DNS_PORT, "*", local_ip);
 
 /*------------------------------------------------------------------------------
   Start Web Server:
-  ------------------------------------------------------------------------------*/
+------------------------------------------------------------------------------*/
   
   //Display page:
   webServer.on("/", handleRoot);
-  
-  //Captive portal control:
-  dnsServer.start(DNS_PORT, "*", local_ip);
-  
-  //Reply as captive portal:
-  webServer.onNotFound(handleRoot);
-
+ 
   //To get update of Sonar1:      
   webServer.on("/sonar1", sonar1);
   
+  //Try to handle not found:
+  webServer.onNotFound(handleNotFound); 
+
   //Start server:
   webServer.begin();                  
   Serial.println("HTTP server started");
@@ -171,10 +178,10 @@ void setup() {
 ------------------------------------------------------------------------------*/
 
 void loop() {
-  //captive portal
-  dnsServer.processNextRequest();
+  
   //WEB Server handler:
   webServer.handleClient(); 
   delay(1);
+  dnsServer.processNextRequest();
 }
 

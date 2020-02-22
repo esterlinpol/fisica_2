@@ -65,7 +65,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                 width: 100px;
                 height: 50px;
                 border-radius: 50px/25px;
-                background-color: rgba(0, 136, 160, 0.568);
+                background-color: rgba(4, 118, 138, 0.699);
                 content: '';
                 }
             .water:after {
