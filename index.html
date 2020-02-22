@@ -1,24 +1,44 @@
-const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
     <head>
         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">
         <title>Distribucion de Fluidos</title>
         <style>
-            body {
-	            padding: 50px 0;
-	            text-align: center;
+            html { 
+                background-color: black;
+                color: white;
+                font-family: Helvetica; 
+                display: inline-block; 
+                margin: 0px auto; 
+                text-align: center;
                 }
-            h1 {color: blue;
+            :root {
+                --background: red;
+
+                }  
+            #top {
+                margin: auto;
+                width: 15em;
+                height: 15em;
+                padding: 20px;
+                background-color: var(--background);
                 }
-            p {color: blue;
-            }   
+           
+                
         </style>
     </head>
     <body>
-        <h1>Sistema de Distribucion de Fluidos</h1>
-        <p>Monitorea el nivel de liquidos de los contenedores de
-            respaldo en casa.</p>
+        <div id="webpage">
+            <h1>Sistema de Monitoreo</h1>
+            <span id="sonar1value">0</span>
+        </div>
+        <div id="top">
+            <p>Something</p>
+        </div>
+        <script>
+            var style = getComputedStyle(document.body);
+            console.log(style.getPropertyValue('--background'));
+            document.documentElement.style.setProperty('--background', 'green');
+        </script>    
     </body>
 </html>
-)=====";
