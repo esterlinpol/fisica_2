@@ -23,6 +23,18 @@
 const char* ssid = "New Line";
 const char* password = "cinema00";
 
+//Define WiFi Name and password for AP:
+const char* ssid1 = "Flow";
+const char* password1 = "SafePass123";
+
+//Set IP address GW and subnet:
+IPAddress local_ip(192,168,10,4);
+IPAddress gateway(192,168,10,1);
+IPAddress subnet(255,255,255,0);
+
+//Define DNS Server:
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
 
 //Define HTTP Server:
 ESP8266WebServer webServer(80);
@@ -89,9 +101,28 @@ void setup() {
   Serial.begin(115200);
 
 /*------------------------------------------------------------------------------
-  WIFI Client Configuration:
+  WIFI AP Configuration:
   ------------------------------------------------------------------------------*/
 
+  Serial.println();
+  //Set Settings:
+  Serial.print("Setting soft-AP configuration ... ");
+
+  Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
+
+  //Start WiFi in AP mode:
+  Serial.print("Setting soft-AP ... ");
+
+  Serial.println(WiFi.softAP(ssid1, password1) ? "Ready" : "Failed!");
+
+  Serial.print("Soft-AP IP address = ");
+
+  Serial.println(WiFi.softAPIP());
+  
+
+/*------------------------------------------------------------------------------
+  WIFI Client Configuration:
+  ------------------------------------------------------------------------------
   //Connect to WIFI
   WiFi.mode(WIFI_STA); 
   WiFi.begin(ssid, password);
@@ -112,6 +143,7 @@ void setup() {
 
   //Show WIFI Client IP:
   Serial.println(WiFi.localIP());  
+*/
 
 /*------------------------------------------------------------------------------
   Start Web Server:
@@ -119,6 +151,12 @@ void setup() {
   
   //Display page:
   webServer.on("/", handleRoot);
+  
+  //Captive portal control:
+  dnsServer.start(DNS_PORT, "*", local_ip);
+  
+  //Reply as captive portal:
+  webServer.onNotFound(handleRoot);
 
   //To get update of Sonar1:      
   webServer.on("/sonar1", sonar1);
@@ -133,7 +171,8 @@ void setup() {
 ------------------------------------------------------------------------------*/
 
 void loop() {
-  
+  //captive portal
+  dnsServer.processNextRequest();
   //WEB Server handler:
   webServer.handleClient(); 
   delay(1);
