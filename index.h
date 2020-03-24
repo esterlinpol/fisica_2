@@ -15,8 +15,8 @@ const char MAIN_page[] PROGMEM = R"=====(
                     }
                 :root {
                     
-                    --height: 50px;
-                    --height1: 50px;    
+                    --height1: 50px;
+                    --height2: 50px;    
                     }  
     
                 .container {
@@ -63,7 +63,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                     bottom: 0;
                     width: 100px;
                                
-                    padding-top: var(--height);
+                    padding-top: var(--height1);
                     border-radius: 50px/25px;
                     background-color: rgba(0, 136, 160, 0.568);
                     transition: 0.3s linear;
@@ -129,7 +129,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                     bottom: 0;
                     width: 100px;
                                
-                    padding-top: var(--height1);
+                    padding-top: var(--height2);
                     border-radius: 50px/25px;
                     background-color: rgba(0, 136, 160, 0.568);
                     transition: 0.3s linear;
@@ -172,6 +172,10 @@ const char MAIN_page[] PROGMEM = R"=====(
                 }
                 p{
                     font-weight: bold;
+                }
+                .flow {
+                    text-align:center;
+                    margin-top: 320px;
                 }      
                     
             </style>
@@ -188,7 +192,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                 </div>
                 <div class="vdescr">    
                     <p>Tinaco(%):</p>
-                    <span id="sonar1value">100%</span>                
+                    <span id="sonar2value">100%</span>                
                 </div>    
             </section>            
             <section class="container">
@@ -198,33 +202,51 @@ const char MAIN_page[] PROGMEM = R"=====(
                 <div class="cylinder1">
                         <div class="water1"></div>
                     </div>
-            </section>
+                    
+                </section>
+                <div class="flow">
+                    <p>Flujo de Agua:</p>
+                    <span id="flujo">100</span><span> Litros/s ⇑</span>
+                </div>
+
             <script>
                     setInterval(function() {
                     // Call a function repetatively with 2 Second interval
-                    getData();
+                    getData1();
+                    getData2();
                     }, 2000); //2000mSeconds update rate
                     
-                    function getData() {
+                    function getData1() {
                         var xhttp = new XMLHttpRequest();
                         xhttp.onreadystatechange = function() {
                             if (this.readyState == 4 && this.status == 200) {
                               document.getElementById("sonar1value").innerHTML =
                               this.responseText;
                               var style = getComputedStyle(document.body);
-                        var calculado = this.responseText * 2.5;
-                                  
-                        document.documentElement.style.setProperty('--height', calculado+'px');
                         document.documentElement.style.setProperty('--height1', this.responseText+'px');
-                        
-                              
-                            }
+                        }
                           };
                           xhttp.open("GET", "sonar1", true);
                           
                           xhttp.send();
         
                         }
+
+                    function getData2() {
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onreadystatechange = function() {
+                            if (this.readyState == 4 && this.status == 200) {
+                              document.getElementById("sonar2value").innerHTML =
+                              this.responseText;
+                              var style = getComputedStyle(document.body);
+                        document.documentElement.style.setProperty('--height2', this.responseText+'px');
+                        }
+                          };
+                          xhttp.open("GET", "sonar2", true);
+                          
+                          xhttp.send();
+        
+                        }    
             </script>           
         </body>
     </html>

@@ -20,8 +20,8 @@
 #include "index.h"  //Web page header file
 
 //Define WiFi Name and password for WIFI Client:
-const char* ssid = "New Line";
-const char* password = "cinema00";
+const char* ssid = "JOSEPOLANCO";
+const char* password = "contrawifi";
 
 //Define WiFi Name and password for AP:
 const char* ssid1 = "Flow";
@@ -39,6 +39,13 @@ DNSServer dnsServer;
 //Define HTTP Server:
 ESP8266WebServer webServer(80);
 
+//Define Relay pin for pump:
+#define pumppin 14
+
+//Sonar 2 pump activation value:
+int s2min = 20;
+int s2max = 90;
+
 /*------------------------------------------------------------------------------
   Main Website, set content, reply:
 ------------------------------------------------------------------------------*/
@@ -52,12 +59,17 @@ ESP8266WebServer webServer(80);
   }
 
 /*------------------------------------------------------------------------------
-  Sonar 1 configuration:
+  Sonar 1 and 2 configuration:
 ------------------------------------------------------------------------------*/
 
   //Define Pins for sonas module 1:
-  #define trigPin1 5
-  #define echoPin1 4
+  #define trigPin1 16
+  #define echoPin1 5
+  
+  //Define Pins for sonas module 2:
+  #define trigPin2 4
+  #define echoPin2 0
+  
 
 /*------------------------------------------------------------------------------
   Sonar 1 code, data colector:
@@ -90,6 +102,53 @@ ESP8266WebServer webServer(80);
   delay(1000);
 
   }  
+
+/*------------------------------------------------------------------------------
+  Sonar 2 code, data colector:
+------------------------------------------------------------------------------*/
+  void sonar2(){
+  //Set variables:
+  int heightTank2=10; //Set Height of the container
+  int deviation2=2; //Set Distance from the maximun height of the liquid
+  
+  //Initializa calculation variables:
+  int duration2,distance2,percentage2;
+  
+  //Pulse and Receive:
+  digitalWrite(trigPin2,HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(trigPin2,LOW);
+  duration2=pulseIn(echoPin2,HIGH);
+  
+  //Calculate distance and percentage:
+  distance2=(duration2/2)/29.1;
+  percentage2=100-(((distance2-deviation2)*100)/heightTank2);
+  
+  //Convert result to String:
+  String amount2 = String(percentage2);
+  
+  //Send sonar 1 value only to client ajax request
+  webServer.send(200, "text/plane", amount2); 
+  /*
+  //Activate pump on 20% water:
+  if (percentage2<=s2min) {
+    while (percentage2<s2max) {
+     digitalWrite(2, HIGH); 
+    }
+  }*/
+  //Wait 1 second to re calculate:
+  delay(1000);
+
+  }  
+/*------------------------------------------------------------------------------
+  Flow sensor, data colector:
+------------------------------------------------------------------------------*/
+  //Reads serial information from arduino nano on serial2:
+  float flujo(){
+
+
+
+  } 
 
 /*------------------------------------------------------------------------------
   WIFI AP Configuration:
@@ -144,9 +203,19 @@ ESP8266WebServer webServer(80);
 
 void setup() {
   
-  pinMode(trigPin1,OUTPUT); //Sets the trigPin1 as an Output
-  pinMode(echoPin1,INPUT); //Sets the echoPin1 as an Input
-
+  
+  //Set Pump pin as an output and turns it off:
+  pinMode(pumppin,OUTPUT); 
+  digitalWrite(pumppin, LOW);
+  
+  //Set sonar 1 pins:
+  pinMode(trigPin1,OUTPUT); 
+  pinMode(echoPin1,INPUT); 
+  
+  //Set sonar 2 pins:
+  pinMode(trigPin2,OUTPUT); 
+  pinMode(echoPin2,INPUT); 
+    
   //Open Serial Port:
   Serial.begin(115200);
   startAP();
@@ -164,6 +233,12 @@ void setup() {
  
   //To get update of Sonar1:      
   webServer.on("/sonar1", sonar1);
+
+  //To get update of Sonar1:      
+  webServer.on("/sonar2", sonar2);
+
+  //To get update of Sonar1:      
+  webServer.on("/flujo", flujo);
   
   //Try to handle not found:
   webServer.onNotFound(handleNotFound); 
@@ -182,6 +257,8 @@ void loop() {
   //WEB Server handler:
   webServer.handleClient(); 
   delay(1);
-  dnsServer.processNextRequest();
+  
+  
+  
+  //dnsServer.processNextRequest();
 }
-
