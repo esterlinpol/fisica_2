@@ -63,12 +63,12 @@ int s2max = 90;
 ------------------------------------------------------------------------------*/
 
   //Define Pins for sonas module 1:
-  #define trigPin1 16
-  #define echoPin1 5
+  #define trigPin1 5
+  #define echoPin1 16
   
   //Define Pins for sonas module 2:
-  #define trigPin2 4
-  #define echoPin2 0
+  #define trigPin2 0
+  #define echoPin2 4
   
 
 /*------------------------------------------------------------------------------
@@ -76,8 +76,8 @@ int s2max = 90;
 ------------------------------------------------------------------------------*/
   void sonar1(){
   //Set variables:
-  int heightTank1=10; //Set Height of the container
-  int deviation1=2; //Set Distance from the maximun height of the liquid
+  int heightTank1=20; //Set Height of the container
+  int deviation1=6; //Set Distance from the maximun height of the liquid
   
   //Initializa calculation variables:
   int duration1,distance1,percentage1;
@@ -109,7 +109,7 @@ int s2max = 90;
   void sonar2(){
   //Set variables:
   int heightTank2=10; //Set Height of the container
-  int deviation2=2; //Set Distance from the maximun height of the liquid
+  int deviation2=5; //Set Distance from the maximun height of the liquid
   
   //Initializa calculation variables:
   int duration2,distance2,percentage2;

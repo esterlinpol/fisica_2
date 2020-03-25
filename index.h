@@ -223,7 +223,8 @@ const char MAIN_page[] PROGMEM = R"=====(
                               document.getElementById("sonar1value").innerHTML =
                               this.responseText;
                               var style = getComputedStyle(document.body);
-                        document.documentElement.style.setProperty('--height1', this.responseText+'px');
+                              var calculado1 = this.responseText * 2.5;
+                        document.documentElement.style.setProperty('--height1', calculado1+'px');
                         }
                           };
                           xhttp.open("GET", "sonar1", true);
@@ -239,7 +240,8 @@ const char MAIN_page[] PROGMEM = R"=====(
                               document.getElementById("sonar2value").innerHTML =
                               this.responseText;
                               var style = getComputedStyle(document.body);
-                        document.documentElement.style.setProperty('--height2', this.responseText+'px');
+                              var calculado2 = this.responseText * 2.5;
+                        document.documentElement.style.setProperty('--height2', calculado2+'px');
                         }
                           };
                           xhttp.open("GET", "sonar2", true);
