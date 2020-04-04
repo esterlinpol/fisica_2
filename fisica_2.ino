@@ -16,6 +16,7 @@
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 #include <HCSR04.h>
+#include <SoftwareSerial.h>
 
 #include "index.h"  //Web page header file
 
@@ -41,10 +42,15 @@ ESP8266WebServer webServer(80);
 
 //Define Relay pin for pump:
 #define pumppin 14
+bool pumppinstate = false;
 
 //Sonar 2 pump activation value:
 int s2min = 20;
 int s2max = 90;
+
+//Flow sensor data variable:
+String flowlm = "10";
+
 
 /*------------------------------------------------------------------------------
   Main Website, set content, reply:
@@ -129,25 +135,34 @@ int s2max = 90;
   
   //Send sonar 1 value only to client ajax request
   webServer.send(200, "text/plane", amount2); 
-  /*
-  //Activate pump on 20% water:
+
+  //Activate pump on s2min water percentage:
   if (percentage2<=s2min) {
-    while (percentage2<s2max) {
-     digitalWrite(2, HIGH); 
-    }
-  }*/
+    digitalWrite(pumppin, HIGH);
+    pumppinstate = true;
+    } 
+  else {
+   digitalWrite(pumppin, LOW);
+   pumppinstate = false;
+   
+  }
   //Wait 1 second to re calculate:
   delay(1000);
 
-  }  
+ }  
 /*------------------------------------------------------------------------------
   Flow sensor, data colector:
 ------------------------------------------------------------------------------*/
-  //Reads serial information from arduino nano on serial2:
-  float flujo(){
-
-
-
+  //If pump pin is HIGH, Reads serial information from arduino nano on Serial1:
+  void flow(){
+    if (pumppinstate==true) {
+      //flowlm = Serial1.read();
+      webServer.send(200, "text/plane", "10.4");
+    }
+    else {
+      webServer.send(200, "text/plane", "0");
+    }
+    
   } 
 
 /*------------------------------------------------------------------------------
@@ -216,8 +231,13 @@ void setup() {
   pinMode(trigPin2,OUTPUT); 
   pinMode(echoPin2,INPUT); 
     
-  //Open Serial Port:
+  //Open Serial Port for pc logs:
   Serial.begin(115200);
+
+  //Open Serial Port for flow sensor:
+  Serial1.begin(115200);
+  
+  //Start Wifi AP:
   startAP();
   
   //Connect to WIFI as client:
@@ -238,7 +258,7 @@ void setup() {
   webServer.on("/sonar2", sonar2);
 
   //To get update of Sonar1:      
-  webServer.on("/flujo", flujo);
+  webServer.on("/flow", flow);
   
   //Try to handle not found:
   webServer.onNotFound(handleNotFound); 
