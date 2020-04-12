@@ -16,7 +16,7 @@
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
 #include <HCSR04.h>
-#include <SoftwareSerial.h>
+#include <Wire.h>
 
 #include "index.h"  //Web page header file
 
@@ -49,8 +49,10 @@ int s2min = 20;
 int s2max = 90;
 
 //Flow sensor data variable:
-String flowlm = "10";
+String flowlm;
 
+//i2c slave address with flow sensor:
+const byte SlaveDeviceId = 1;
 
 /*------------------------------------------------------------------------------
   Main Website, set content, reply:
@@ -69,12 +71,12 @@ String flowlm = "10";
 ------------------------------------------------------------------------------*/
 
   //Define Pins for sonas module 1:
-  #define trigPin1 5
-  #define echoPin1 16
+  #define trigPin1 0
+  #define echoPin1 2
   
   //Define Pins for sonas module 2:
-  #define trigPin2 0
-  #define echoPin2 4
+  #define trigPin2 12
+  #define echoPin2 13
   
 
 /*------------------------------------------------------------------------------
@@ -139,25 +141,48 @@ String flowlm = "10";
   //Activate pump on s2min water percentage:
   if (percentage2<=s2min) {
     digitalWrite(pumppin, HIGH);
-    pumppinstate = true;
-    } 
-  else {
-   digitalWrite(pumppin, LOW);
-   pumppinstate = false;
-   
-  }
+    }
+  else if (percentage2==s2max){
+    digitalWrite(pumppin, LOW);
+  }   
+  
   //Wait 1 second to re calculate:
   delay(1000);
 
  }  
+
+
 /*------------------------------------------------------------------------------
   Flow sensor, data colector:
 ------------------------------------------------------------------------------*/
   //If pump pin is HIGH, Reads serial information from arduino nano on Serial1:
   void flow(){
     if (pumppinstate==true) {
-      //flowlm = Serial1.read();
-      webServer.send(200, "text/plane", "10.4");
+      
+      // Request data from slave.
+      Wire.beginTransmission(SlaveDeviceId);
+      int available = Wire.requestFrom(SlaveDeviceId, (uint8_t)2);
+      
+      if(available == 2)
+      {
+        int receivedValue = Wire.read() << 8 | Wire.read(); 
+        flowlm = receivedValue/10000;
+        Serial.println(flowlm); 
+      }
+      else
+      {
+        Serial.print("Unexpected number of bytes received: ");
+        Serial.println(available);
+      }
+
+      int result = Wire.endTransmission();
+      if(result)
+      {
+        Serial.print("Unexpected endTransmission result: ");
+        Serial.println(result);
+      }
+
+      webServer.send(200, "text/plane", flowlm);
     }
     else {
       webServer.send(200, "text/plane", "0");
@@ -243,6 +268,9 @@ void setup() {
   //Connect to WIFI as client:
   wificl();
   dnsServer.start(DNS_PORT, "*", local_ip);
+
+  // Start i2c bus as master
+  Wire.begin(); 
 
 /*------------------------------------------------------------------------------
   Start Web Server:

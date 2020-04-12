@@ -215,7 +215,7 @@ const char MAIN_page[] PROGMEM = R"=====(
                 getData1();
                 getData2();
                 getData3();
-                }, 2000); //2000mSeconds update rate
+                }, 1000); //1000mSeconds update rate
                 
                 function getData1() {
                     var xhttp = new XMLHttpRequest();
